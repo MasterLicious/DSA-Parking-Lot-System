@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Exit &amp; Pay — ParkPesa{% endblock %}
+{% block content %}
+<h1>Exit &amp; Payment</h1>
+<p>Enter the number plate to calculate the duration and amount payable.</p>
+
+<form class="card" method="POST">
+  <label for="plate_number">Number plate</label>
+  <input type="text" id="plate_number" name="plate_number" placeholder="e.g. KDD 123A" required autofocus>
+  <button type="submit">Calculate fee</button>
+</form>
+
+{% if bill %}
+<div class="bill">
+  <h3>Bill</h3>
+  <p><strong>Plate:</strong> {{ bill.plate_number }}</p>
+  <p><strong>Time in:</strong> {{ bill.entry_time }}</p>
+  <p><strong>Duration:</strong> {{ bill.duration_minutes }} minutes</p>
+  <p><strong>Rate tier applied:</strong> {{ bill.tier_label }}</p>
+  <p><strong>Amount due: Kshs. {{ "%.2f"|format(bill.amount_due) }}</strong></p>
+
+  <form method="POST" action="{{ url_for('pay', session_id=bill.session_id) }}">
+    <input type="hidden" name="amount_due" value="{{ bill.amount_due }}">
+    <input type="hidden" name="duration_minutes" value="{{ bill.duration_minutes }}">
+    <p>Choose payment method — the barrier opens only once payment is confirmed.</p>
+    <div class="pay-methods">
+      <button type="submit" name="method" value="MPESA">Pay with M-Pesa</button>
+      <button type="submit" name="method" value="CARD">Pay with Card</button>
+      <button type="submit" name="method" value="CASH">Pay Cash</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

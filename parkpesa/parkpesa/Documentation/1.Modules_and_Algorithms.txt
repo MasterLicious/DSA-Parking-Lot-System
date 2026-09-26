@@ -1,0 +1,85 @@
+PARKPESA - MODERN PARKING MANAGEMENT SYSTEM
+TASK ONE (a): MODULES AND ALGORITHMS
+=============================================================
+
+1. PROPOSED MODULES
+
+Analysing the client's terms of reference produced 8 modules, each mapped
+to one or more of the client's stated objectives:
+
+  1. Slot Display Module            -> live availability on entrance board/web
+  2. Slot Allocation Module         -> assigns a bay to an arriving vehicle
+  3. Vehicle Entry Module           -> records plate, time-in, allocated bay
+  4. Duration & Fee Calculation Module -> computes duration + amount payable
+  5. Payment Module                 -> collects payment (M-Pesa/card/cash)
+  6. Barrier Control Module         -> opens barrier only on confirmed payment
+  7. Rate Management Module         -> lets admin change fees, no code change
+  8. Reporting / Audit Module       -> auditable record of shillings collected
+
+Each module is implemented as its own class in modules.py, kept separate
+from the web layer (app.py) so each can be understood and tested on its own.
+
+=============================================================
+
+2. ALGORITHMS (pseudocode for each module)
+
+--- 2.1 Slot Display Module ---
+FUNCTION get_board():
+    slots <- SELECT all rows FROM slots table, ordered by zone
+    free_count <- count of slots where status = 'available'
+    RETURN slots, free_count, total_count
+
+--- 2.2 Slot Allocation Module ---
+FUNCTION allocate_slot():
+    IF available_queue is empty: RETURN "lot full"
+    slot_id <- dequeue from front of available_queue     (O(1))
+    mark slot_id as 'occupied' in database
+    RETURN slot_id
+
+FUNCTION release_slot(slot_id):
+    mark slot_id as 'available' in database
+    enqueue slot_id to back of available_queue            (O(1))
+
+--- 2.3 Vehicle Entry Module ---
+FUNCTION record_arrival(plate_number):
+    plate_number <- normalise (uppercase, remove spaces)
+    slot <- SlotAllocationModule.allocate_slot()
+    IF slot is null: RAISE LotFullError
+    INSERT new session (plate_number, slot_id, entry_time = now(), status='PARKED')
+    RETURN session, slot
+
+--- 2.4 Duration & Fee Calculation Module ---
+FUNCTION calculate(entry_time, exit_time):
+    duration_minutes <- (exit_time - entry_time) in minutes
+    FOR each tier in rate_tiers (sorted ascending by ceiling):
+        IF tier.ceiling = "no limit" OR duration_minutes <= tier.ceiling:
+            RETURN duration_minutes, tier.amount, tier.label
+
+--- 2.5 Payment Module ---
+FUNCTION take_payment(session_id, amount, method):
+    reference <- generate_reference(method)   (simulated M-Pesa/card/cash receipt)
+    INSERT payment record (session_id, amount, method, reference, timestamp)
+    UPDATE session SET status='PAID', exit_time=now(), amount_due=amount
+    RETURN reference
+
+--- 2.6 Barrier Control Module ---
+FUNCTION open_if_paid(session):
+    IF session.status != 'PAID': RETURN false     (barrier stays shut)
+    SlotAllocationModule.release_slot(session.slot_id)
+    RETURN true                                    (barrier opens)
+
+--- 2.7 Rate Management Module ---
+FUNCTION update_rate(rate_id, new_amount):
+    UPDATE rates table SET amount = new_amount WHERE rate_id = rate_id
+    (takes effect on the very next fee calculation - no code/deploy needed)
+
+--- 2.8 Reporting / Audit Module ---
+FUNCTION summary():
+    gross_total <- SUM(amount) FROM payments
+    vat_total <- gross_total * vat_percent / (100 + vat_percent)
+    by_method <- SUM(amount) FROM payments GROUP BY method
+    RETURN gross_total, vat_total, by_method, full transaction list
+
+=============================================================
+Full working implementation of every algorithm above is in modules.py,
+with the same structure and comments, in the ParkPesa GitHub repository.

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Reports — ParkPesa{% endblock %}
+{% block content %}
+<h1>Reports &amp; Audit Trail</h1>
+<p>Every shilling collected is recorded here for reconciliation and VAT filing.</p>
+
+<div class="summary-strip">
+  <div class="stat"><div class="num">Kshs. {{ "%.0f"|format(summary.gross_total) }}</div>Total collected</div>
+  <div class="stat"><div class="num">Kshs. {{ "%.0f"|format(summary.vat_total) }}</div>VAT ({{ summary.vat_percent }}%)</div>
+  <div class="stat"><div class="num">{{ summary.count }}</div>Transactions</div>
+</div>
+
+<div class="card">
+  <h3>By payment method</h3>
+  <table>
+    <tr><th>Method</th><th>Total (Kshs.)</th></tr>
+    {% for method, total in summary.by_method.items() %}
+    <tr><td>{{ method }}</td><td>{{ "%.2f"|format(total) }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h3>Transaction log</h3>
+  <table>
+    <tr><th>Time</th><th>Plate</th><th>Duration</th><th>Amount</th><th>Method</th><th>Reference</th></tr>
+    {% for t in txns %}
+    <tr>
+      <td>{{ t.paid_at }}</td>
+      <td>{{ t.plate_number }}</td>
+      <td>{{ t.duration_min }} min</td>
+      <td>{{ "%.2f"|format(t.amount) }}</td>
+      <td>{{ t.method }}</td>
+      <td>{{ t.reference }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

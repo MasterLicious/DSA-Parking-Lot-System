@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Slot Availability — ParkPesa{% endblock %}
+{% block content %}
+<h1>Entrance Display Board</h1>
+<p>Live availability — refresh this page (or view on your phone) before driving in.</p>
+
+<div class="summary-strip">
+  <div class="stat free"><div class="num">{{ board.free }}</div>Bays free</div>
+  <div class="stat occupied"><div class="num">{{ board.occupied }}</div>Occupied</div>
+  <div class="stat"><div class="num">{{ board.total }}</div>Total bays</div>
+</div>
+
+{% set zones = board.slots | groupby("zone") %}
+{% for zone, slots in zones %}
+  <div class="zone">
+    <h3>Zone {{ zone }}</h3>
+    <div class="bay-grid">
+      {% for s in slots %}
+        <div class="bay {{ s.status }}">{{ s.slot_code }}</div>
+      {% endfor %}
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

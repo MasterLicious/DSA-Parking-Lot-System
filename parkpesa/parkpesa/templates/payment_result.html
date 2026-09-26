@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Payment Confirmed — ParkPesa{% endblock %}
+{% block content %}
+<h1>Payment {{ 'Confirmed' if barrier_open else 'Failed' }}</h1>
+
+<div class="card">
+  <p><strong>Plate:</strong> {{ plate }}</p>
+  <p><strong>Method:</strong> {{ method }}</p>
+  <p><strong>Amount paid:</strong> Kshs. {{ "%.2f"|format(amount) }}</p>
+  <p><strong>Reference:</strong> {{ reference }}</p>
+
+  <div class="barrier {{ 'open' if barrier_open else '' }}"></div>
+  {% if barrier_open %}
+    <p>✅ Barrier is opening — the bay has been released back to availability.</p>
+  {% else %}
+    <p>❌ Barrier remains shut — payment was not confirmed.</p>
+  {% endif %}
+  <a class="btn" href="{{ url_for('display_board') }}">Back to board</a>
+</div>
+{% endblock %}

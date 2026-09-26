@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Vehicle Entry — ParkPesa{% endblock %}
+{% block content %}
+<h1>Vehicle Entry</h1>
+<p>Gate operator: type the number plate as the vehicle arrives. A bay is allocated automatically.</p>
+
+<form class="card" method="POST">
+  <label for="plate_number">Number plate</label>
+  <input type="text" id="plate_number" name="plate_number" placeholder="e.g. KDD 123A" required autofocus>
+  <button type="submit">Record arrival &amp; allocate bay</button>
+</form>
+
+{% if ticket %}
+<div class="ticket">
+  <h3>Entry ticket</h3>
+  <p><strong>Plate:</strong> {{ ticket.session.plate_number }}</p>
+  <p><strong>Bay allocated:</strong> {{ ticket.slot.slot_code }} (Zone {{ ticket.slot.zone }})</p>
+  <p><strong>Time in:</strong> {{ ticket.session.entry_time }}</p>
+  <p>Keep this plate number handy — you'll need it to exit and pay.</p>
+</div>
+{% endif %}
+{% endblock %}

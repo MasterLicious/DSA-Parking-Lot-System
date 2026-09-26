@@ -1,0 +1,54 @@
+PARKPESA - MODERN PARKING MANAGEMENT SYSTEM
+TASK ONE (b): DATA STRUCTURES USED AND REASONS
+=============================================================
+
+1. QUEUE (Python collections.deque)
+   Where used: the pool of available parking slots, inside the Slot
+   Allocation Module.
+   Why: allocating a bay (remove from the front) and freeing a bay
+   (add to the back) are both O(1) operations. A queue also gives FIFO
+   fairness - bays rotate evenly through use instead of the same bay
+   always being reassigned. The alternative, scanning a list of N slots
+   to find the first free one on every arrival, costs O(n) and gets
+   slower as the car park grows. The queue avoids that entirely.
+
+2. HASH-INDEXED LOOKUP (SQL PRIMARY KEY, accessed via sqlite3.Row)
+   Where used: looking up a session by plate_number or session_id, and
+   looking up a slot by slot_id.
+   Why: indexed primary-key lookups are effectively O(1). This matters
+   at the exit gate, where a driver should not have to wait while the
+   system searches through every past session to find the matching one.
+
+3. ORDERED LIST OF RATE TIER RECORDS
+   Where used: the Fee Calculation Module, reading the "rates" table
+   fresh on every calculation.
+   Why: the tiers are few (about 5) and must be checked in order,
+   smallest ceiling first, to find the correct bracket. A simple
+   ordered scan is O(k) with k constant, i.e. effectively O(1), and is
+   far easier to audit than nested if/else logic hard-coded in Python.
+
+4. RELATIONAL TABLES (ROWS OF DATA, NOT CONSTANTS IN CODE)
+   Where used: the "rates", "slots" and "settings" tables.
+   Why: this is what makes the system dynamic. Management edits data,
+   not code, to change a fee, adjust VAT, or add a bay - directly
+   satisfying the client's requirement to "let management change
+   parking rates at any time without a software change."
+
+5. APPEND-ONLY LOG (the "payments" table)
+   Where used: the Reporting / Audit Module.
+   Why: rows are never updated or deleted from the user interface, so
+   the table itself becomes a tamper-evident audit trail for
+   reconciliation and VAT filing. SQL's SUM and GROUP BY then do the
+   aggregation in a single indexed pass over this log.
+
+6. EXCEPTION OBJECT (a custom LotFullError class)
+   Where used: the Vehicle Entry Module.
+   Why: represents the "parking lot is full" edge case explicitly,
+   instead of relying on a magic return value like None or -1. This
+   lets the web layer catch it directly and show the driver a clear
+   message - this is the system's exception-handling mechanism, as
+   required by the brief's "exception handling" scope item.
+
+=============================================================
+Full working implementation of every structure above is in modules.py
+and database.py in the ParkPesa GitHub repository.

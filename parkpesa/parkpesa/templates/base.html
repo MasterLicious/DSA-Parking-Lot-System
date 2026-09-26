@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}ParkPesa{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a href="{{ url_for('display_board') }}" class="brand">
+    <span class="brand-mark"></span> ParkPesa
+  </a>
+  <nav>
+    <a href="{{ url_for('display_board') }}">Board</a>
+    <a href="{{ url_for('vehicle_entry') }}">Entry</a>
+    <a href="{{ url_for('parked') }}">Parked Cars</a>
+    <a href="{{ url_for('vehicle_exit') }}">Exit &amp; Pay</a>
+    <a href="{{ url_for('admin_rates') }}">Rates</a>
+    <a href="{{ url_for('admin_reports') }}">Reports</a>
+  </nav>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrap">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer>ParkPesa &mdash; Data Structures &amp; Algorithms, Task One &amp; Two</footer>
+</body>
+</html>

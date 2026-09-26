@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Rate Management — ParkPesa{% endblock %}
+{% block content %}
+<h1>Rate Management</h1>
+<p>Change fees or VAT any time — this updates the database only. No code change or restart needed; the very next car exiting is charged the new amount.</p>
+
+<form class="card" method="POST">
+  <table>
+    <tr><th>Tier</th><th>Applies up to</th><th>Amount (Kshs.)</th></tr>
+    {% for r in rates %}
+    <tr>
+      <td>{{ r.label }}</td>
+      <td>{{ 'No limit' if r.up_to_minutes == -1 else (r.up_to_minutes ~ ' min') }}</td>
+      <td><input type="number" step="0.01" name="rate_{{ r.rate_id }}" value="{{ r.amount }}"></td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <label for="vat_percent" style="margin-top:16px;">VAT percentage (used for reporting)</label>
+  <input type="number" step="0.01" id="vat_percent" name="vat_percent" value="{{ vat_percent }}">
+
+  <button type="submit">Save changes</button>
+</form>
+{% endblock %}

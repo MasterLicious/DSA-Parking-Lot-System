@@ -1,0 +1,85 @@
+PARKPESA - MODERN PARKING MANAGEMENT SYSTEM
+TASK ONE (c): DYNAMIC DATABASE DESIGN
+=============================================================
+
+WHAT "DYNAMIC" MEANS HERE
+"Dynamic" is used in two senses in this design:
+  1. It is a real database (SQLite), not a flat file, so it supports
+     concurrent reads and fast aggregation for reporting.
+  2. Every business-changeable value - parking fees, VAT percentage,
+     bay inventory - is stored as DATA (a row in a table), never as a
+     hard-coded constant in the Python code. This means those values
+     can change at any time without editing or redeploying any code,
+     directly satisfying the client's requirement.
+
+=============================================================
+
+ENTITY-RELATIONSHIP OVERVIEW
+
+  slots (1) ----< sessions (1) ----< payments
+                      |
+                      | (fee looked up from, not copied as a foreign key)
+                   rates  (read live at the moment of fee calculation)
+
+  settings  (standalone key/value table, e.g. vat_percent)
+
+=============================================================
+
+TABLE DEFINITIONS
+
+--- slots --- (the physical parking bays)
+  slot_id        INTEGER  PRIMARY KEY
+  slot_code      TEXT     e.g. "A1", unique
+  zone           TEXT     groups bays for the display board
+  status         TEXT     'available' or 'occupied'
+
+--- sessions --- (one row per vehicle visit)
+  session_id     INTEGER  PRIMARY KEY
+  plate_number   TEXT     normalised to uppercase, no spaces
+  slot_id        INTEGER  FOREIGN KEY -> slots.slot_id
+  entry_time     TEXT     ISO datetime
+  exit_time      TEXT     ISO datetime, NULL until paid
+  duration_min   INTEGER  filled in at exit
+  amount_due     REAL     filled in at exit
+  status         TEXT     'PARKED' or 'PAID'
+
+--- rates --- (the dynamic pricing table, management-editable)
+  rate_id        INTEGER  PRIMARY KEY
+  label          TEXT     e.g. "Up to 2 hours"
+  up_to_minutes  INTEGER  ceiling for this tier; -1 means no limit
+  amount         REAL     fee in Kshs.
+  sort_order     INTEGER  evaluation order (smallest ceiling first)
+
+--- payments --- (the audit trail)
+  payment_id     INTEGER  PRIMARY KEY
+  session_id     INTEGER  FOREIGN KEY -> sessions.session_id
+  amount         REAL
+  method         TEXT     MPESA, CARD, or CASH
+  reference      TEXT     receipt / simulated M-Pesa code
+  paid_at        TEXT     ISO datetime
+
+--- settings --- (single-row-per-key configuration store)
+  key            TEXT     PRIMARY KEY, e.g. "vat_percent"
+  value          TEXT
+
+=============================================================
+
+WHY THIS DESIGN SATISFIES "DYNAMIC"
+
+- Adding a new zone or bay = one INSERT into slots. No code change.
+- Changing a fee or VAT percentage = one UPDATE to a row in rates or
+  settings (done through the admin "Rate Management" screen in the
+  actual system). No code change, and it takes effect on the very
+  next vehicle that exits.
+- The schema is normalised (3rd normal form): fees are not duplicated
+  into every session row. Instead, the fee is computed at exit time by
+  reading the CURRENT rates table, so:
+    * a session that has already been paid keeps the amount that was
+      correct at the moment it was charged (the amount_due column is a
+      historical record), while
+    * any future exit automatically uses whatever rate is active at
+      that time, with zero code changes required.
+
+=============================================================
+Full working implementation of this schema is in database.py in the
+ParkPesa GitHub repository (see the init_db() function).

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Currently Parked — ParkPesa{% endblock %}
+{% block content %}
+<h1>Currently Parked Vehicles</h1>
+<p>Every vehicle inside the lot right now, oldest arrival first.</p>
+
+<div class="card">
+  {% if vehicles %}
+  <table>
+    <tr><th>Plate</th><th>Bay</th><th>Zone</th><th>Entry time</th><th>Time so far</th></tr>
+    {% for v in vehicles %}
+    <tr>
+      <td>{{ v.plate_number }}</td>
+      <td>{{ v.slot_code }}</td>
+      <td>{{ v.zone }}</td>
+      <td>{{ v.entry_time }}</td>
+      <td>{{ v.minutes_so_far }} min</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No vehicles currently parked — the lot is empty.</p>
+  {% endif %}
+</div>
+{% endblock %}
